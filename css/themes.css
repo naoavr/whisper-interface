@@ -1,0 +1,66 @@
+/* Themes */
+:root {
+  color-scheme: dark light;
+}
+
+/* Dark mode is the default — variables.css provides dark values */
+
+/* Light mode overrides */
+[data-theme="light"] {
+  --clr-bg-start: #d9f0e0;
+  --clr-bg-mid: #b2dcbf;
+  --clr-bg-end: #f4d35e;
+  --clr-surface: rgba(0, 0, 0, 0.06);
+  --clr-border: rgba(0, 0, 0, 0.20);
+  --clr-text: #111827;
+  --clr-text-dim: #1f2937;
+  --clr-text-muted: #374151;
+}
+
+[data-theme="light"] select option {
+  background: #f0faf2;
+  color: #111827;
+}
+
+[data-theme="light"] .output-area {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .modal-box {
+  background: #f0faf2;
+}
+
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="text"],
+[data-theme="light"] select {
+  background: rgba(255, 255, 255, 0.70);
+  color: #111827;
+}
+
+[data-theme="light"] input[type="email"]::placeholder,
+[data-theme="light"] input[type="text"]::placeholder {
+  color: #6b7280;
+}
+
+/* Theme toggle button */
+#theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 500;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--clr-text);
+  transition: background var(--transition);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  line-height: 1;
+}
+
+#theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.28);
+}

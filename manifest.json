@@ -1,0 +1,25 @@
+{
+  "name": "Whisper ASR – Transcrição de Áudio",
+  "short_name": "Whisper ASR",
+  "description": "Interface web para transcrição de áudio via Whisper ASR",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0b3b1a",
+  "background_color": "#0b3b1a",
+  "lang": "pt",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

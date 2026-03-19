@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interface web para transcrição de áudio via Whisper ASR" />
+  <title>Whisper ASR – Transcrição de Áudio</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b3b1a" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+</head>
+<body>
+
+  <!-- Theme toggle (fixed top-right) -->
+  <button id="theme-toggle" aria-label="Mudar para tema claro" title="Tema claro">🌙</button>
+
+  <div class="layout">
+    <!-- Sidebar logo -->
+    <aside class="logo-area" aria-label="Logótipo">
+      <img
+        src="https://www.gnr.pt/layout/gnr_frontcontent_1.png"
+        alt="GNR – Guarda Nacional Republicana"
+        width="160"
+        height="auto"
+        loading="eager"
+      />
+      <p class="app-title">Sistema de<br>Transcrição de Áudio</p>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main" id="main-content">
+      <div class="content" role="main">
+
+        <h1>Transcrição de Áudio</h1>
+
+        <!-- Email -->
+        <div class="field-group">
+          <label for="email">
+            Endereço de Email
+            <span aria-hidden="true"> *</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="nome@exemplo.pt"
+            autocomplete="email"
+            required
+            aria-required="true"
+            aria-describedby="email-hint"
+          />
+          <small id="email-hint" class="field-hint" style="color:var(--clr-text-muted);font-size:0.78rem;">
+            Os resultados serão enviados para este endereço.
+          </small>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="field-group">
+          <label>Ficheiros de Áudio / Vídeo</label>
+          <div
+            id="drop-zone"
+            class="drop-zone"
+            role="button"
+            tabindex="0"
+            aria-label="Zona de arrastar e largar ficheiros. Clique para selecionar."
+          >
+            <span class="drop-icon" aria-hidden="true">🎵</span>
+            <p>Arraste os ficheiros aqui ou clique para selecionar</p>
+            <small>Formatos suportados: MP3, WAV, OGG, FLAC, M4A, WMA, AAC, MP4, WEBM, MKV, AVI, MOV &mdash; máx. 500 MB por ficheiro</small>
+            <input
+              type="file"
+              id="file-input"
+              name="audio_file"
+              accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.m4a,.wma,.aac,.mp4,.webm,.mkv,.avi,.mov"
+              multiple
+              aria-label="Selecionar ficheiros de áudio ou vídeo"
+            />
+          </div>
+          <p id="file-count" class="file-count" aria-live="polite" aria-atomic="true"></p>
+        </div>
+
+        <!-- Options -->
+        <div class="options-row">
+          <div class="field-group">
+            <label for="task">Tarefa</label>
+            <select id="task" name="task" aria-label="Selecionar tarefa de processamento">
+              <option value="transcribe">Transcrever</option>
+              <option value="translate">Traduzir para inglês</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="language">Idioma do áudio (opcional)</label>
+            <input
+              type="text"
+              id="language"
+              name="language"
+              placeholder="pt, en, fr…"
+              maxlength="10"
+              aria-label="Idioma do áudio — deixe em branco para deteção automática"
+            />
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+          <button
+            type="button"
+            id="process-btn"
+            class="btn-primary"
+            aria-label="Iniciar processamento dos ficheiros selecionados"
+          >
+            ▶ Processar
+          </button>
+          <button
+            type="button"
+            id="cancel-btn"
+            class="btn-danger"
+            hidden
+            aria-label="Cancelar processamento em curso"
+          >
+            ✕ Cancelar
+          </button>
+        </div>
+
+        <!-- Status -->
+        <section class="status-area" aria-label="Estado do processamento">
+          <div id="status-row" style="display:flex;align-items:center;gap:6px;">
+            <span id="spinner" class="spinner" hidden aria-hidden="true"></span>
+            <p
+              id="status-text"
+              class="status-text"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></p>
+          </div>
+          <div id="progress-wrap" class="progress-wrap" hidden aria-hidden="true">
+            <div
+              id="progress-bar"
+              class="progress-bar"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            ></div>
+          </div>
+        </section>
+
+        <!-- Queue -->
+        <section aria-label="Fila de processamento" aria-live="polite">
+          <ul id="queue-list" class="queue-list" aria-label="Lista de ficheiros em fila"></ul>
+        </section>
+
+        <!-- Output -->
+        <section
+          id="output-area"
+          class="output-area"
+          hidden
+          aria-label="Resultado da transcrição"
+        >
+          <div class="output-header">
+            <span>Resultado</span>
+            <button
+              type="button"
+              id="copy-btn"
+              class="btn-copy"
+              aria-label="Copiar texto da transcrição para a área de transferência"
+            >
+              📋 Copiar
+            </button>
+          </div>
+          <pre
+            id="output-text"
+            class="output-text"
+            aria-label="Texto transcrito"
+            tabindex="0"
+          ></pre>
+
+          <!-- Export row -->
+          <div
+            id="export-row"
+            class="export-row"
+            hidden
+            aria-label="Exportar transcrição"
+          >
+            <span>Exportar:</span>
+            <button type="button" id="export-txt"  class="btn-export" aria-label="Exportar como ficheiro de texto TXT">TXT</button>
+            <button type="button" id="export-srt"  class="btn-export" aria-label="Exportar como legendas SRT">SRT</button>
+            <button type="button" id="export-json" class="btn-export" aria-label="Exportar como ficheiro JSON">JSON</button>
+          </div>
+        </section>
+
+        <!-- Server status -->
+        <footer style="display:flex;justify-content:flex-end;" aria-label="Estado do servidor">
+          <div class="server-indicator">
+            <span
+              id="server-dot"
+              class="server-dot"
+              aria-hidden="true"
+            ></span>
+            <span id="server-label" aria-live="polite">A verificar servidor…</span>
+          </div>
+        </footer>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Confirm modal -->
+  <div
+    id="confirm-modal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title"
+    aria-describedby="modal-msg"
+    hidden
+  >
+    <div class="modal-box">
+      <h2 id="modal-title">Confirmar processamento</h2>
+      <p id="modal-msg"></p>
+      <div class="modal-actions">
+        <button
+          type="button"
+          id="modal-cancel"
+          class="btn-danger"
+          aria-label="Cancelar e fechar diálogo"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          id="modal-confirm"
+          class="btn-primary"
+          aria-label="Confirmar e iniciar processamento"
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main module -->
+  <script type="module" src="js/main.js"></script>
+
+  <!-- Service Worker registration -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js")
+          .catch((err) => console.warn("Service Worker não registado:", err));
+      });
+    }
+  </script>
+
+</body>
+</html>

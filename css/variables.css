@@ -1,0 +1,22 @@
+/* Design Tokens */
+:root {
+  --clr-bg-start: #0b3b1a;
+  --clr-bg-mid: #145c2a;
+  --clr-bg-end: #f4d35e;
+  --clr-surface: rgba(255, 255, 255, 0.10);
+  --clr-border: rgba(255, 255, 255, 0.35);
+  --clr-text: #f9fafb;
+  --clr-text-dim: #e5e7eb;
+  --clr-text-muted: #d1d5db;
+  --clr-primary: #2563eb;
+  --clr-primary-hover: #1d4ed8;
+  --clr-success: #16a34a;
+  --clr-danger: #ef4444;
+  --clr-danger-light: #fecaca;
+  --clr-success-light: #86efac;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --transition: 0.2s ease;
+}
