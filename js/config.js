@@ -12,4 +12,12 @@ export const CONFIG = Object.freeze({
     "mp3", "wav", "ogg", "flac", "m4a", "wma", "aac",
     "mp4", "webm", "mkv", "avi", "mov",
   ]),
+  WHISPER_MODELS: [
+    { value: "tiny",   label: "Tiny  — mais rápido, menor precisão" },
+    { value: "base",   label: "Base  — rápido, boa precisão" },
+    { value: "small",  label: "Small — equilibrado (recomendado)" },
+    { value: "medium", label: "Medium — preciso, mais lento" },
+    { value: "large",  label: "Large — máxima precisão" },
+  ],
+  DEFAULT_MODEL: "small",
 });

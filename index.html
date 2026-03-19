@@ -86,6 +86,12 @@
           <p id="file-count" class="file-count" aria-live="polite" aria-atomic="true"></p>
         </div>
 
+        <!-- Audio / Video preview -->
+        <div id="preview-area" class="preview-area" hidden aria-label="Pré-visualização do ficheiro">
+          <p class="section-title">Pré-visualização</p>
+          <audio id="preview-player" controls preload="metadata" class="preview-player" aria-label="Reprodutor de pré-visualização do ficheiro"></audio>
+        </div>
+
         <!-- Options -->
         <div class="options-row">
           <div class="field-group">
@@ -93,6 +99,17 @@
             <select id="task" name="task" aria-label="Selecionar tarefa de processamento">
               <option value="transcribe">Transcrever</option>
               <option value="translate">Traduzir para inglês</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="model">Modelo Whisper</label>
+            <select id="model" name="model" aria-label="Selecionar modelo Whisper">
+              <option value="tiny">Tiny — mais rápido, menor precisão</option>
+              <option value="base">Base — rápido, boa precisão</option>
+              <option value="small" selected>Small — equilibrado (recomendado)</option>
+              <option value="medium">Medium — preciso, mais lento</option>
+              <option value="large">Large — máxima precisão</option>
             </select>
           </div>
 
@@ -183,6 +200,7 @@
             aria-label="Texto transcrito"
             tabindex="0"
           ></pre>
+          <p id="word-count" class="word-count" aria-live="polite" aria-atomic="true"></p>
 
           <!-- Export row -->
           <div
@@ -194,6 +212,7 @@
             <span>Exportar:</span>
             <button type="button" id="export-txt"  class="btn-export" aria-label="Exportar como ficheiro de texto TXT">TXT</button>
             <button type="button" id="export-srt"  class="btn-export" aria-label="Exportar como legendas SRT">SRT</button>
+            <button type="button" id="export-vtt"  class="btn-export" aria-label="Exportar como legendas WebVTT">VTT</button>
             <button type="button" id="export-json" class="btn-export" aria-label="Exportar como ficheiro JSON">JSON</button>
           </div>
         </section>
@@ -209,6 +228,24 @@
             <span id="server-label" aria-live="polite">A verificar servidor…</span>
           </div>
         </footer>
+
+        <!-- History -->
+        <section id="history-section" aria-label="Histórico de transcrições">
+          <div class="history-header">
+            <h2 class="section-title" style="font-size:0.85rem;">Histórico</h2>
+            <button
+              type="button"
+              id="clear-history-btn"
+              class="btn-history-clear"
+              hidden
+              aria-label="Limpar todo o histórico de transcrições"
+            >
+              🗑 Limpar tudo
+            </button>
+          </div>
+          <p id="history-empty" class="history-empty" hidden>Ainda não há transcrições guardadas.</p>
+          <ul id="history-list" class="history-list" aria-label="Lista do histórico de transcrições"></ul>
+        </section>
 
       </div>
     </main>
