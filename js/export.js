@@ -71,9 +71,39 @@ export function exportAsSRT(results) {
 }
 
 /**
- * Export results as JSON (.json).
+ * Export results as WebVTT subtitle format (.vtt).
+ * Note: Whisper ASR in basic mode returns plain text without segment timestamps.
+ * Each line is assigned sequential placeholder timecodes spaced 3 seconds apart.
+ * For accurate timestamps, use a Whisper build that returns per-segment timing.
  * @param {Array<{ name: string, text: string }>} results
  */
+export function exportAsVTT(results) {
+  let vtt = "WEBVTT\n\n";
+  let timeOffset = 0; // seconds
+
+  function toVttTime(secs) {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.000`;
+  }
+
+  results.forEach((r, ri) => {
+    // File header cue
+    vtt += `NOTE ${r.name}\n\n`;
+
+    const lines = r.text.split(/\n+/).filter(Boolean);
+    lines.forEach((line, li) => {
+      const cueId = `${ri + 1}-${li + 1}`;
+      vtt += `${cueId}\n`;
+      vtt += `${toVttTime(timeOffset)} --> ${toVttTime(timeOffset + 3)}\n`;
+      vtt += `${line}\n\n`;
+      timeOffset += 3;
+    });
+  });
+  downloadFile(vtt, "transcricoes.vtt", "text/vtt;charset=utf-8");
+}
+
 export function exportAsJSON(results) {
   const payload = {
     exportedAt: new Date().toISOString(),

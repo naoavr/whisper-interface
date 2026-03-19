@@ -3,12 +3,13 @@ import { CONFIG } from "./config.js";
 import {
   initDOM, setStatus, clearMessages, showError, showSuccess,
   setServerState, getExtension, setProgress, showProgress,
+  updateWordCount, escapeHtml,
 } from "./dom.js";
 import { transcribeFile, sendEmail } from "./api.js";
 import { withRetry } from "./retry.js";
 import { buildQueue, setBadge } from "./queue.js";
-import { exportAsText, exportAsSRT, exportAsJSON } from "./export.js";
-import { saveTranscription } from "./persistence.js";
+import { exportAsText, exportAsSRT, exportAsVTT, exportAsJSON } from "./export.js";
+import { saveTranscription, getHistory, deleteTranscription, clearHistory } from "./persistence.js";
 import { initTheme, toggleTheme } from "./theme.js";
 import { startHealthCheck } from "./health.js";
 
@@ -50,11 +51,15 @@ dz.addEventListener("drop", (e) => {
   if (e.dataTransfer?.files?.length) {
     dom.fileInput.files = e.dataTransfer.files;
     updateFileCount();
+    showPreview(e.dataTransfer.files);
   }
 });
 
 // ── File input ─────────────────────────────────────────────────────────────
-dom.fileInput.addEventListener("change", updateFileCount);
+dom.fileInput.addEventListener("change", () => {
+  updateFileCount();
+  showPreview(dom.fileInput.files);
+});
 
 function updateFileCount() {
   const n = dom.fileInput.files?.length ?? 0;
@@ -149,6 +154,7 @@ dom.processBtn.addEventListener("click", async () => {
   const files = dom.fileInput.files;
   const email = dom.emailInput.value.trim();
   const task = dom.taskSelect.value;
+  const model = dom.modelSelect.value;
   const language = dom.langInput.value.trim();
 
   const confirmed = await showModal(
@@ -195,6 +201,7 @@ dom.processBtn.addEventListener("click", async () => {
         () => transcribeFile(file, {
           task,
           language,
+          model,
           signal,
           onProgress: (pct) => setProgress(dom, pct),
         }),
@@ -228,6 +235,7 @@ dom.processBtn.addEventListener("click", async () => {
       .join("\n\n---\n\n");
 
     dom.outputText.textContent = combined;
+    updateWordCount(dom.wordCount, combined);
     dom.outputArea.hidden = false;
     dom.exportRow.hidden = false;
 
@@ -249,6 +257,9 @@ dom.processBtn.addEventListener("click", async () => {
         }
       }
     }
+
+    // Refresh history panel
+    loadHistory().catch(console.error);
   } else if (!hadError) {
     setStatus(dom.statusText, "Nenhum resultado obtido.");
   }
@@ -288,10 +299,112 @@ dom.copyBtn.addEventListener("click", async () => {
 // ── Export ─────────────────────────────────────────────────────────────────
 dom.exportTxt.addEventListener("click",  () => exportAsText(results));
 dom.exportSrt.addEventListener("click",  () => exportAsSRT(results));
+dom.exportVtt.addEventListener("click",  () => exportAsVTT(results));
 dom.exportJson.addEventListener("click", () => exportAsJSON(results));
+
+// ── Audio / video preview ──────────────────────────────────────────────────
+function revokePreviewUrl() {
+  if (dom.previewPlayer?.src?.startsWith("blob:")) {
+    URL.revokeObjectURL(dom.previewPlayer.src);
+  }
+}
+
+function showPreview(files) {
+  if (!dom.previewArea || !dom.previewPlayer || !files || files.length === 0) return;
+
+  // Only preview the first selected file
+  const file = files[0];
+  revokePreviewUrl();
+  dom.previewPlayer.src = URL.createObjectURL(file);
+  dom.previewArea.hidden = false;
+}
+
+// ── History ────────────────────────────────────────────────────────────────
+/**
+ * Render history items from IndexedDB.
+ */
+async function loadHistory() {
+  try {
+    const items = await getHistory();
+    dom.historyList.innerHTML = "";
+
+    if (items.length === 0) {
+      dom.historyEmpty.hidden = false;
+      dom.clearHistoryBtn.hidden = true;
+      return;
+    }
+
+    dom.historyEmpty.hidden = true;
+    dom.clearHistoryBtn.hidden = false;
+
+    items.forEach((item) => {
+      const date = new Date(item.timestamp).toLocaleString("pt-PT");
+      const preview = item.text.replace(/\n/g, " ").slice(0, 120);
+      const li = document.createElement("li");
+      li.className = "history-item";
+      li.dataset.id = item.id;
+      li.innerHTML = `
+        <div class="history-meta">
+          <span class="history-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+          <span class="history-date">${escapeHtml(date)}</span>
+        </div>
+        <p class="history-preview">${escapeHtml(preview)}${item.text.length > 120 ? "…" : ""}</p>
+        <div class="history-actions">
+          <button type="button" class="btn-history-view" data-id="${item.id}" aria-label="Ver transcrição de ${escapeHtml(item.name)}">Ver</button>
+          <button type="button" class="btn-history-delete" data-id="${item.id}" aria-label="Eliminar transcrição de ${escapeHtml(item.name)}">✕</button>
+        </div>
+      `;
+      dom.historyList.appendChild(li);
+    });
+
+    // View button
+    dom.historyList.querySelectorAll(".btn-history-view").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const item = items.find(r => r.id === id);
+        if (!item) return;
+        results = [{ name: item.name, text: item.text }];
+        const combined = `=== ${item.name} ===\n\n${item.text}`;
+        dom.outputText.textContent = combined;
+        updateWordCount(dom.wordCount, combined);
+        dom.outputArea.hidden = false;
+        dom.exportRow.hidden = false;
+        dom.outputArea.scrollIntoView({ behavior: "smooth" });
+      });
+    });
+
+    // Delete button
+    dom.historyList.querySelectorAll(".btn-history-delete").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = Number(btn.dataset.id);
+        try {
+          await deleteTranscription(id);
+          await loadHistory();
+        } catch (e) {
+          console.error("Erro ao eliminar:", e);
+        }
+      });
+    });
+  } catch (e) {
+    console.error("Erro ao carregar histórico:", e);
+  }
+}
+
+dom.clearHistoryBtn.addEventListener("click", async () => {
+  try {
+    await clearHistory();
+    await loadHistory();
+  } catch (e) {
+    console.error("Erro ao limpar histórico:", e);
+  }
+});
+
+// Initial history load
+loadHistory().catch(console.error);
 
 // ── Unload cleanup ─────────────────────────────────────────────────────────
 window.addEventListener("unload", () => {
   stopHealth();
   if (controller) controller.abort();
+  revokePreviewUrl();
 });

@@ -10,7 +10,10 @@ export function initDOM() {
     dropZone:        document.getElementById("drop-zone"),
     fileInput:       document.getElementById("file-input"),
     fileCount:       document.getElementById("file-count"),
+    previewArea:     document.getElementById("preview-area"),
+    previewPlayer:   document.getElementById("preview-player"),
     taskSelect:      document.getElementById("task"),
+    modelSelect:     document.getElementById("model"),
     langInput:       document.getElementById("language"),
     processBtn:      document.getElementById("process-btn"),
     cancelBtn:       document.getElementById("cancel-btn"),
@@ -21,10 +24,12 @@ export function initDOM() {
     queueList:       document.getElementById("queue-list"),
     outputArea:      document.getElementById("output-area"),
     outputText:      document.getElementById("output-text"),
+    wordCount:       document.getElementById("word-count"),
     copyBtn:         document.getElementById("copy-btn"),
     exportRow:       document.getElementById("export-row"),
     exportTxt:       document.getElementById("export-txt"),
     exportSrt:       document.getElementById("export-srt"),
+    exportVtt:       document.getElementById("export-vtt"),
     exportJson:      document.getElementById("export-json"),
     serverDot:       document.getElementById("server-dot"),
     serverLabel:     document.getElementById("server-label"),
@@ -33,6 +38,10 @@ export function initDOM() {
     modalMsg:        document.getElementById("modal-msg"),
     modalConfirmBtn: document.getElementById("modal-confirm"),
     modalCancelBtn:  document.getElementById("modal-cancel"),
+    historySection:  document.getElementById("history-section"),
+    historyList:     document.getElementById("history-list"),
+    historyEmpty:    document.getElementById("history-empty"),
+    clearHistoryBtn: document.getElementById("clear-history-btn"),
   };
 }
 
@@ -143,4 +152,16 @@ export function setProgress(dom, pct) {
  */
 export function showProgress(dom, visible) {
   dom.progressWrap.hidden = !visible;
+}
+
+/**
+ * Update word and character count display.
+ * @param {HTMLElement} el  — the #word-count element
+ * @param {string} text     — the full transcription text
+ */
+export function updateWordCount(el, text) {
+  if (!el) return;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
+  el.textContent = `${words} palavra${words !== 1 ? "s" : ""} · ${chars} caracter${chars !== 1 ? "es" : "e"}`;
 }

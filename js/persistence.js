@@ -63,9 +63,36 @@ export async function saveTranscription({ name, text, email, task }) {
 }
 
 /**
- * Retrieve all saved transcriptions, newest first.
- * @returns {Promise<Array>}
+ * Delete a single transcription record by id.
+ * @param {number} id
+ * @returns {Promise<void>}
  */
+export async function deleteTranscription(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(new Error(`Erro ao eliminar: ${e.target.error}`));
+  });
+}
+
+/**
+ * Clear all saved transcriptions.
+ * @returns {Promise<void>}
+ */
+export async function clearHistory() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(new Error(`Erro ao limpar histórico: ${e.target.error}`));
+  });
+}
+
 export async function getHistory() {
   const db = await openDB();
   return new Promise((resolve, reject) => {

@@ -9,12 +9,13 @@ import { CONFIG } from "./config.js";
  * @param {{ task?: string, language?: string, signal?: AbortSignal, onProgress?: (pct: number) => void }} options
  * @returns {Promise<string>} Transcribed text
  */
-export function transcribeFile(file, { task = "transcribe", language = "", signal, onProgress } = {}) {
+export function transcribeFile(file, { task = "transcribe", language = "", model = "small", signal, onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append("audio_file", file, file.name);
     formData.append("task", task);
     if (language) formData.append("language", language);
+    if (model) formData.append("model", model);
 
     const xhr = new XMLHttpRequest();
 
