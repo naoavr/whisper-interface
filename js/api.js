@@ -6,16 +6,32 @@ import { CONFIG } from "./config.js";
  * so that upload progress can be tracked.
  *
  * @param {File} file
- * @param {{ task?: string, language?: string, signal?: AbortSignal, onProgress?: (pct: number) => void }} options
+ * @param {{ task?: string, language?: string, model?: string, signal?: AbortSignal, onProgress?: (pct: number) => void, workerUrl?: string }} options
  * @returns {Promise<string>} Transcribed text
  */
-export function transcribeFile(file, { task = "transcribe", language = "", model = "small", signal, onProgress } = {}) {
+export function transcribeFile(file, { task = "transcribe", language = "", model = "small", signal, onProgress, workerUrl } = {}) {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append("audio_file", file, file.name);
-    formData.append("task", task);
-    if (language) formData.append("language", language);
-    if (model) formData.append("model", model);
+
+    let endpoint;
+    if (workerUrl) {
+      // Direct call to a worker's Whisper ASR API
+      const params = new URLSearchParams({
+        task: task === "translate" ? "translate" : "transcribe",
+        output: "json",
+        encode: "true",
+      });
+      if (language) params.set("language", language);
+      if (model)    params.set("model", model);
+      endpoint = `${workerUrl}/asr?${params}`;
+    } else {
+      // Default proxy endpoint (sends params as form fields)
+      formData.append("task", task);
+      if (language) formData.append("language", language);
+      if (model)    formData.append("model", model);
+      endpoint = CONFIG.ASR_ENDPOINT;
+    }
 
     const xhr = new XMLHttpRequest();
 
@@ -53,7 +69,7 @@ export function transcribeFile(file, { task = "transcribe", language = "", model
       reject(err);
     });
 
-    xhr.open("POST", CONFIG.ASR_ENDPOINT);
+    xhr.open("POST", endpoint);
 
     // Link AbortSignal to XHR
     if (signal) {

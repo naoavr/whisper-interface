@@ -12,6 +12,10 @@ import { exportAsText, exportAsSRT, exportAsVTT, exportAsJSON } from "./export.j
 import { saveTranscription, getHistory, deleteTranscription, clearHistory } from "./persistence.js";
 import { initTheme, toggleTheme } from "./theme.js";
 import { startHealthCheck } from "./health.js";
+import {
+  initWorkersUI, stopWorkerHealthChecks,
+  getOnlineWorkers, pickWorker,
+} from "./workers.js";
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 initTheme();
@@ -20,6 +24,12 @@ const dom = initDOM();
 const stopHealth = startHealthCheck(CONFIG, (state) => {
   setServerState(dom.serverDot, dom.serverLabel, state);
 });
+
+// ── Workers ────────────────────────────────────────────────────────────────
+initWorkersUI(dom);
+
+/** Round-robin index for distributing files across online workers. */
+let workerRRIndex = 0;
 
 // ── State ──────────────────────────────────────────────────────────────────
 /** @type {AbortController|null} */
@@ -216,6 +226,9 @@ async function processBatch({ files, email, task, model, language }) {
 
   let hadError = false;
 
+  // Snapshot online workers at batch start for round-robin distribution
+  const onlineWorkers = getOnlineWorkers();
+
   for (let i = 0; i < files.length; i++) {
     if (signal.aborted) break;
 
@@ -223,6 +236,14 @@ async function processBatch({ files, email, task, model, language }) {
     setBadge(i, "active");
     setStatus(dom.statusText, `A processar: ${file.name} (${i + 1}/${files.length})…`);
     setProgress(dom, 0);
+
+    // Pick a worker for this file (round-robin), fall back to default proxy
+    let workerUrl;
+    if (onlineWorkers.length > 0) {
+      const picked = pickWorker(onlineWorkers, workerRRIndex);
+      workerRRIndex = picked.nextIndex;
+      workerUrl = picked.worker.url;
+    }
 
     try {
       const text = await withRetry(
@@ -232,6 +253,7 @@ async function processBatch({ files, email, task, model, language }) {
           model,
           signal,
           onProgress: (pct) => setProgress(dom, pct),
+          workerUrl,
         }),
         { signal }
       );
@@ -466,6 +488,7 @@ loadHistory().catch(console.error);
 // ── Unload cleanup ─────────────────────────────────────────────────────────
 window.addEventListener("unload", () => {
   stopHealth();
+  stopWorkerHealthChecks();
   if (controller) controller.abort();
   revokePreviewUrl();
 });

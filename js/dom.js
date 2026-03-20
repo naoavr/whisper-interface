@@ -43,6 +43,28 @@ export function initDOM() {
     historyList:     document.getElementById("history-list"),
     historyEmpty:    document.getElementById("history-empty"),
     clearHistoryBtn: document.getElementById("clear-history-btn"),
+    // Workers
+    workersSection:     document.getElementById("workers-section"),
+    workersList:        document.getElementById("workers-list"),
+    workersEmpty:       document.getElementById("workers-empty"),
+    addWorkerBtn:       document.getElementById("add-worker-btn"),
+    workerModal:        document.getElementById("worker-modal"),
+    workerTabBtns:      document.querySelectorAll(".worker-modal-tab"),
+    workerTabScript:    document.getElementById("worker-tab-script"),
+    workerTabManual:    document.getElementById("worker-tab-manual"),
+    workerScriptName:   document.getElementById("worker-script-name"),
+    workerScriptPort:   document.getElementById("worker-script-port"),
+    generateScriptBtn:  document.getElementById("generate-script-btn"),
+    scriptOutput:       document.getElementById("script-output"),
+    scriptCode:         document.getElementById("script-code"),
+    copyScriptBtn:      document.getElementById("copy-script-btn"),
+    downloadScriptBtn:  document.getElementById("download-script-btn"),
+    workerScriptUrl:    document.getElementById("worker-script-url"),
+    workerManualName:   document.getElementById("worker-manual-name"),
+    workerManualUrl:    document.getElementById("worker-manual-url"),
+    workerModalAdd:     document.getElementById("worker-modal-add"),
+    workerModalCancel:  document.getElementById("worker-modal-cancel"),
+    workerModalError:   document.getElementById("worker-modal-error"),
   };
 }
 
