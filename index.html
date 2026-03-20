@@ -230,6 +230,21 @@
           </div>
         </footer>
 
+        <!-- Workers -->
+        <section id="workers-section" aria-label="Trabalhadores de transcrição">
+          <div class="workers-header">
+            <h2 class="section-title" style="font-size:0.85rem;">Trabalhadores</h2>
+            <button
+              type="button"
+              id="add-worker-btn"
+              class="btn-add-worker"
+              aria-label="Adicionar trabalhador de transcrição"
+            >+ Adicionar</button>
+          </div>
+          <p id="workers-empty" class="workers-empty">Nenhum trabalhador registado. Apenas o servidor principal será utilizado.</p>
+          <ul id="workers-list" class="workers-list" aria-label="Lista de trabalhadores de transcrição"></ul>
+        </section>
+
         <!-- History -->
         <section id="history-section" aria-label="Histórico de transcrições">
           <div class="history-header">
@@ -282,6 +297,117 @@
         >
           Confirmar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worker modal -->
+  <div
+    id="worker-modal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="worker-modal-title"
+    hidden
+  >
+    <div class="modal-box modal-box--wide">
+      <h2 id="worker-modal-title">Adicionar Trabalhador de Transcrição</h2>
+
+      <!-- Tabs -->
+      <div class="modal-tabs" role="tablist">
+        <button
+          type="button"
+          class="worker-modal-tab modal-tab--active"
+          data-tab="script"
+          role="tab"
+          aria-selected="true"
+          aria-controls="worker-tab-script"
+        >⚙ Script de Integração</button>
+        <button
+          type="button"
+          class="worker-modal-tab"
+          data-tab="manual"
+          role="tab"
+          aria-selected="false"
+          aria-controls="worker-tab-manual"
+        >🔗 URL Manual</button>
+      </div>
+
+      <!-- Script tab -->
+      <div id="worker-tab-script" class="worker-tab-panel" role="tabpanel">
+        <p class="worker-tab-desc">Gere um script para executar no computador que terá o software de transcrição. Após a execução, introduza o URL apresentado no terminal.</p>
+        <div class="options-row">
+          <div class="field-group">
+            <label for="worker-script-name">Nome do trabalhador</label>
+            <input
+              type="text"
+              id="worker-script-name"
+              placeholder="Ex: PC Sala Servidores"
+              maxlength="60"
+              autocomplete="off"
+            />
+          </div>
+          <div class="field-group" style="max-width:140px;">
+            <label for="worker-script-port">Porta</label>
+            <input
+              type="text"
+              id="worker-script-port"
+              placeholder="9000"
+              maxlength="5"
+              value="9000"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+        <button type="button" id="generate-script-btn" class="btn-primary" style="margin-top:4px;">⚙ Gerar Script</button>
+
+        <div id="script-output" hidden>
+          <pre id="script-code" class="integration-code" aria-label="Script de integração gerado" tabindex="0"></pre>
+          <div class="script-actions">
+            <button type="button" id="copy-script-btn" class="btn-copy" aria-label="Copiar script para área de transferência">📋 Copiar</button>
+            <a id="download-script-btn" class="btn-export" href="#" aria-label="Descarregar script como ficheiro">⬇ Descarregar</a>
+          </div>
+          <div class="field-group" style="margin-top:12px;">
+            <label for="worker-script-url">URL do trabalhador (após executar o script)</label>
+            <input
+              type="text"
+              id="worker-script-url"
+              placeholder="http://192.168.1.100:9000"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual tab -->
+      <div id="worker-tab-manual" class="worker-tab-panel" role="tabpanel" hidden>
+        <p class="worker-tab-desc">Introduza o nome e o URL de um servidor Whisper ASR já em execução.</p>
+        <div class="field-group">
+          <label for="worker-manual-name">Nome do trabalhador</label>
+          <input
+            type="text"
+            id="worker-manual-name"
+            placeholder="Ex: PC Sala Servidores"
+            maxlength="60"
+            autocomplete="off"
+          />
+        </div>
+        <div class="field-group">
+          <label for="worker-manual-url">URL do servidor Whisper</label>
+          <input
+            type="text"
+            id="worker-manual-url"
+            placeholder="http://192.168.1.100:9000"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <p id="worker-modal-error" class="worker-modal-error" aria-live="polite"></p>
+
+      <div class="modal-actions">
+        <button type="button" id="worker-modal-cancel" class="btn-danger" aria-label="Cancelar e fechar diálogo">Cancelar</button>
+        <button type="button" id="worker-modal-add" class="btn-primary" hidden aria-label="Adicionar trabalhador">Adicionar</button>
       </div>
     </div>
   </div>
