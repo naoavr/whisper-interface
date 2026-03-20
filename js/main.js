@@ -30,6 +30,13 @@ let results = [];
 
 let processing = false;
 
+/**
+ * Queue of pending submission batches.
+ * Each entry holds everything needed to process a set of files.
+ * @type {Array<{files: File[], email: string, task: string, model: string, language: string}>}
+ */
+const submissionQueue = [];
+
 // ── Theme ──────────────────────────────────────────────────────────────────
 dom.themeToggle.addEventListener("click", toggleTheme);
 
@@ -146,29 +153,50 @@ function showModal(message) {
 }
 
 // ── Process ────────────────────────────────────────────────────────────────
-dom.processBtn.addEventListener("click", async () => {
-  clearMessages(dom);
 
-  if (!validateInputs()) return;
+/**
+ * Update the pending-batches badge above the queue list.
+ */
+function updateQueueBadge() {
+  const pending = submissionQueue.length;
+  if (pending > 0) {
+    dom.queuePending.hidden = false;
+    dom.queuePending.textContent =
+      `${pending} lote${pending !== 1 ? "s" : ""} em fila de espera`;
+  } else {
+    dom.queuePending.hidden = true;
+  }
+}
 
-  const files = dom.fileInput.files;
-  const email = dom.emailInput.value.trim();
-  const task = dom.taskSelect.value;
-  const model = dom.modelSelect.value;
-  const language = dom.langInput.value.trim();
+/**
+ * Start processing the next batch in the queue, if one exists and nothing is
+ * currently running.
+ */
+function drainQueue() {
+  if (processing || submissionQueue.length === 0) return;
+  const batch = submissionQueue.shift();
+  updateQueueBadge();
+  processBatch(batch)
+    .catch((err) => {
+      console.error("Erro inesperado no processamento:", err);
+      showError(dom.statusText, "Ocorreu um erro inesperado. Tente novamente.");
+      processing = false;
+    })
+    .then(() => drainQueue());
+}
 
-  const confirmed = await showModal(
-    `Processar ${files.length} ficheiro${files.length !== 1 ? "s" : ""} com a tarefa "${task === "translate" ? "Traduzir para inglês" : "Transcrever"}"?`
-  );
-  if (!confirmed) return;
-
+/**
+ * Process a single submission batch (one or more files) and update the UI.
+ *
+ * @param {{files: File[], email: string, task: string, model: string, language: string}} batch
+ */
+async function processBatch({ files, email, task, model, language }) {
   // Setup
   processing = true;
   results = [];
   controller = new AbortController();
   const { signal } = controller;
 
-  dom.processBtn.disabled = true;
   dom.cancelBtn.hidden = false;
   dom.outputArea.hidden = true;
   dom.exportRow.hidden = true;
@@ -266,15 +294,48 @@ dom.processBtn.addEventListener("click", async () => {
 
   // Cleanup
   processing = false;
-  dom.processBtn.disabled = false;
-  dom.cancelBtn.hidden = true;
+  dom.cancelBtn.hidden = submissionQueue.length === 0;
   dom.spinner.hidden = true;
   setProgress(dom, 100);
   window.removeEventListener("beforeunload", beforeUnload);
+}
+
+dom.processBtn.addEventListener("click", async () => {
+  clearMessages(dom);
+
+  if (!validateInputs()) return;
+
+  // Capture the file list as an Array so it survives input reset below.
+  const files = Array.from(dom.fileInput.files);
+  const email = dom.emailInput.value.trim();
+  const task = dom.taskSelect.value;
+  const model = dom.modelSelect.value;
+  const language = dom.langInput.value.trim();
+
+  const willQueue = processing || submissionQueue.length > 0;
+  const queueInfo = willQueue ? " (será adicionado à fila de espera)" : "";
+
+  const confirmed = await showModal(
+    `Processar ${files.length} ficheiro${files.length !== 1 ? "s" : ""} com a tarefa "${task === "translate" ? "Traduzir para inglês" : "Transcrever"}"?${queueInfo}`
+  );
+  if (!confirmed) return;
+
+  submissionQueue.push({ files, email, task, model, language });
+  updateQueueBadge();
+
+  // Reset the file input so the user can immediately select the next batch.
+  dom.fileInput.value = "";
+  updateFileCount();
+
+  drainQueue();
 });
 
 // ── Cancel ─────────────────────────────────────────────────────────────────
 dom.cancelBtn.addEventListener("click", () => {
+  // Discard any pending batches so the queue drains no further.
+  submissionQueue.length = 0;
+  updateQueueBadge();
+
   if (controller) {
     controller.abort();
     controller = null;
