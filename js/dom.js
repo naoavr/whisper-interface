@@ -21,6 +21,7 @@ export function initDOM() {
     spinner:         document.getElementById("spinner"),
     progressWrap:    document.getElementById("progress-wrap"),
     progressBar:     document.getElementById("progress-bar"),
+    queuePending:    document.getElementById("queue-pending"),
     queueList:       document.getElementById("queue-list"),
     outputArea:      document.getElementById("output-area"),
     outputText:      document.getElementById("output-text"),

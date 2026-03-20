@@ -258,6 +258,16 @@ select option {
 }
 
 /* Queue */
+.queue-pending {
+  font-size: 0.82rem;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  margin-bottom: 8px;
+}
+
 .queue-list {
   display: flex;
   flex-direction: column;
